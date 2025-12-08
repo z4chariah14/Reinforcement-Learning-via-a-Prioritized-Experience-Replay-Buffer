@@ -6,6 +6,7 @@ class PrioritizedReplayBuffer:
     def __init__(self, capacity, alpha=0.6, beta=0.4, beta_frames=100000):
         self.alpha = alpha
         self.beta_start = beta
+        self.beta = beta
         self.beta_frames = beta_frames
         self.frame = 0
         self.Tree = SumTree(capacity)
@@ -42,6 +43,14 @@ class PrioritizedReplayBuffer:
         for i in range(batch_size):
             s = np.random.uniform(low=segment * i, high=segment * (i + 1))
             idx, priority, data = self.Tree.get_leaf(s)
+            
+            #possible fix if s >= self.Tree.totalPriority(): s = self.Tree.totalPriority() - 1e-5
+            
+            if data == 0:
+                while data == 0:
+                    # Try a completely random sample instead, rejecting sampling
+                    s = np.random.uniform(0, self.Tree.totalPriority())
+                    idx, priority, data = self.Tree.get_leaf(s)
 
             s_data, a, r, s_prime, done_flag = data
 

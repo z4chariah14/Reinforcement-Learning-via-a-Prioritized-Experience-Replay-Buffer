@@ -6,6 +6,20 @@ __pycache__/
 # C extensions
 *.so
 
+# Ignore the virtual environment folder
+venv/
+.env
+
+# Ignore trained models (large files)
+*.pth
+*.pt
+models/
+results/
+
+# Ignore Python cache files (standard practice)
+__pycache__/
+*.pyc
+
 # Distribution / packaging
 .Python
 build/
