@@ -2,14 +2,14 @@ import gymnasium as gym
 import torch
 from src.agent import DQNAgent
 
-env = gym.make("CartPole-v1", render_mode="human")
+env = gym.make("Acrobot-v1", render_mode="human")
 
 input_dim = env.observation_space.shape[0]
 output_dim = env.action_space.n
 agent = DQNAgent(input_dim, output_dim)
 
 try:
-    agent.policy_net.load_state_dict(torch.load("models/GymAgent.pth"))
+    agent.policy_net.load_state_dict(torch.load("models/Acrobot_PER.pth"))
     agent.policy_net.eval() 
     print("Model loaded successfully!")
 except FileNotFoundError:

@@ -3,6 +3,7 @@ import torch.optim as optim
 import numpy as np
 import random
 from src.buffer import PrioritizedReplayBuffer
+from src.buffer import StandardReplayBuffer
 from src.network import DQN
 
 
@@ -15,6 +16,7 @@ class DQNAgent:
         gamma=0.99,
         batch_size=32,
         buffer_capacity=100000,
+        use_per = True
     ):
         self.gamma = gamma
         self.batch_size = batch_size
@@ -28,7 +30,10 @@ class DQNAgent:
         self.target_net.eval()  # target net is only for prediction, not training
 
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.lr)
-        self.buffer = PrioritizedReplayBuffer(buffer_capacity)
+        if use_per:
+            self.buffer = PrioritizedReplayBuffer(buffer_capacity)
+        else:
+            self.buffer = StandardReplayBuffer(buffer_capacity)
         self.epsilon = 1.0  # fro decay annealing
 
     def act(self, state):
@@ -57,7 +62,7 @@ class DQNAgent:
             next_states_tensor
         ).max(1)[0] * (1 - done_tensor)
         TD_error = Q_targets.unsqueeze(1) - Q_values
-        self.buffer.update_priorities(TD_error, indices)
+        self.buffer.update_priorities(TD_error.detach().cpu().numpy(), indices)
         Loss = torch.mean((TD_error) ** 2 * weights_tensor)
         Loss.backward()
         self.optimizer.step()

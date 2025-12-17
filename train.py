@@ -3,25 +3,25 @@ from src.agent import DQNAgent
 import torch
 import numpy as np
 
-env = gym.make("CartPole-v1")
+env = gym.make("Acrobot-v1")
 
 state_shape = env.observation_space.shape[0]
 num_actions = env.action_space.n
 
 
-Agent = DQNAgent(state_shape, num_actions)
+Agent = DQNAgent(state_shape, num_actions, use_per=False)
 scores = []
 
-episode = 5000
-batch_size = 32
+episode = 1000 
+batch_size = 64
 update_freq = 1000
 frame_counter = 1
 
 
 def get_epsilon(current_frame):
     epsilon_start = 1.0
-    epsilon_end = 0.1
-    decay_frames = 5000
+    epsilon_end = 0.05
+    decay_frames = 20000
 
     epsilon = max(
         epsilon_end,
@@ -52,9 +52,12 @@ for i in range(episode):
         if done:
             break
     scores.append(episode_reward)
-    print(f"Episode: {i}, Reward: {scores[i]}, Epsilon: {get_epsilon(frame_counter)}.")
+    if i % 10 == 0:
+        print(f"Episode: {i}, Score: {episode_reward:.1f}, Eps: {Agent.epsilon:.2f}")
 
     avg_score = np.mean(scores[-100:])
-    if avg_score > 195:
-        torch.save(Agent.policy_net.state_dict(), "models/GymAgent.pth")
+    if avg_score > -100 and i > 50:
+        # torch.save(Agent.policy_net.state_dict(), "models/GymAgent.pth") - cartpole
+        #torch.save(Agent.policy_net.state_dict(), "models/Acrobot_PER.pth")
+        np.save("results/acrobot_uniform_scores.npy", np.array(scores))
         break

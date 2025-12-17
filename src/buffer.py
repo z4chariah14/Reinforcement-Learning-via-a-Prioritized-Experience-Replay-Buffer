@@ -1,9 +1,11 @@
 import numpy as np
 from src.sum_tree import SumTree
+from collections import deque
+import random
 
 
 class PrioritizedReplayBuffer:
-    def __init__(self, capacity, alpha=0.6, beta=0.4, beta_frames=100000):
+    def __init__(self, capacity, alpha=0.2, beta=0.6, beta_frames=100000):
         self.alpha = alpha
         self.beta_start = beta
         self.beta = beta
@@ -42,13 +44,14 @@ class PrioritizedReplayBuffer:
 
         for i in range(batch_size):
             s = np.random.uniform(low=segment * i, high=segment * (i + 1))
+            #possible fix if s >= self.Tree.totalPriority(): s = self.Tree.totalPriority() - 1e-5
             idx, priority, data = self.Tree.get_leaf(s)
             
-            #possible fix if s >= self.Tree.totalPriority(): s = self.Tree.totalPriority() - 1e-5
+            
             
             if data == 0:
                 while data == 0:
-                    # Try a completely random sample instead, rejecting sampling
+                    # used a completely random sample instead, rejecting sampling
                     s = np.random.uniform(0, self.Tree.totalPriority())
                     idx, priority, data = self.Tree.get_leaf(s)
 
@@ -82,3 +85,38 @@ class PrioritizedReplayBuffer:
             weights,
             indices,
         )
+
+class StandardReplayBuffer:
+    def __init__(self, capacity):
+        self.buffer = deque(maxlen=capacity)
+        self.frame = 0
+
+    def add_priorities(self, state, action, reward, next_state, done):
+        """
+        Simple FIFO storage.
+        """
+        experience = (state, action, reward, next_state, done)
+        self.buffer.append(experience)
+        self.frame += 1 
+
+    def sample(self, batch_size):
+        """
+        Uniform Random Sampling.
+        Returns dummy weights (ones) and indices (zeros) to match PER API.
+        """
+        batch = random.sample(self.buffer, batch_size)
+
+        # Unpack the data
+        state, action, reward, next_state, done = zip(*batch)
+        
+    
+        # Weights are all 1.0 (no importance sampling needed)
+        weights = np.ones(batch_size, dtype=np.float32)
+        # Indices are not needed for deque, return dummy zeros
+        indices = np.zeros(batch_size, dtype=int)
+
+        return (np.array(state), np.array(action), np.array(reward), 
+                np.array(next_state), np.array(done), weights, indices)
+
+    def update_priorities(self, td_errors, indices):
+        pass
